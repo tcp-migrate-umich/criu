@@ -50,4 +50,6 @@ message inet_sk_entry {
 	optional string			ifname		= 17;
 	optional uint32			ns_id		= 18;
 	optional sk_shutdown		shutdown	= 19;
+	optional uint32			migrate_token	= 20;
+	optional uint32			migrate_enabled	= 21;
 }

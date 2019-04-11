@@ -89,6 +89,10 @@ struct libsoccr_sk_data {
 	uint32_t	max_window;
 	uint32_t	rcv_wnd;
 	uint32_t	rcv_wup;
+#ifdef TCP_MIGRATE_TOKEN
+	uint32_t	migrate_enabled;
+	uint32_t	migrate_token;
+#endif
 };
 
 /*

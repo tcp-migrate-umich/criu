@@ -272,6 +272,29 @@ err_sopt:
 	return -1;
 }
 
+#ifdef TCP_MIGRATE_TOKEN
+static int get_migration_data(struct libsoccr_sk *sk, struct libsoccr_sk_data *data)
+{
+	uint32_t migrate_token = 0;
+	uint32_t migrate_enabled = 0;
+
+	if (getsockopt(sk->fd, SOL_TCP,
+			TCP_MIGRATE_TOKEN, &migrate_token, sizeof(migrate_token) ||
+		getsockopt(sk->fd, SOL_TCP,
+			TCP_MIGRATE_ENABLED, &migrate_enabled, sizeof(migrate_enabled)) {
+		/* Appeared since 4.8, but TCP_repair itself is since 3.11 */
+
+		logerr("Unable to get migration properties");
+		return -1;
+	}
+
+	data->migrate_token			= migrate_token;
+	data->migrate_enabled		= migrate_enabled;
+
+	return 0;
+}
+#endif
+
 static int get_window(struct libsoccr_sk *sk, struct libsoccr_sk_data *data)
 {
 	struct tcp_repair_window opt;
@@ -402,6 +425,11 @@ int libsoccr_save(struct libsoccr_sk *sk, struct libsoccr_sk_data *data, unsigne
 
 	if (get_queue(sk->fd, TCP_SEND_QUEUE, &data->outq_seq, data->outq_len, &sk->send_queue))
 		return -6;
+
+#ifdef TCP_MIGRATE_TOKEN
+	if (get_migration_data(sk, data))
+		return -7;
+#endif
 
 	return sizeof(struct libsoccr_sk_data);
 }
@@ -743,6 +771,11 @@ int libsoccr_restore(struct libsoccr_sk *sk,
 	if (libsoccr_restore_queue(sk, data, sizeof(*data), TCP_SEND_QUEUE, sk->send_queue))
 		return -1;
 
+#ifdef TCP_MIGRATE_TOKEN
+	if (libsoccr_restore_migration_data(sk, data))
+		return -1;
+#endif
+
 	if (data->flags & SOCCR_FLAGS_WINDOW) {
 		struct tcp_repair_window wopt = {
 			.snd_wl1 = data->snd_wl1,
@@ -899,6 +932,17 @@ static int libsoccr_restore_queue(struct libsoccr_sk *sk, struct libsoccr_sk_dat
 
 	return -5;
 }
+
+#ifdef TCP_MIGRATE_TOKEN
+static int libsoccr_restore_migration_data(struct libsoccr_sk *sk, struct libsoccr_sk_data *data)
+{
+	if (setsockopt(sk->fd, SOL_TCP, TCP_MIGRATE_TOKEN, 
+			&data->migrate_token, sizeof(data->migrate_token) ||
+		setsockopt(sk->fd, SOL_TCP, TCP_MIGRATE_ENABLED, 
+			&data->migrate_enabled, sizeof(data->migrate_enabled))
+		return -1;
+}
+#endif
 
 #define SET_Q_FLAGS	(SOCCR_MEM_EXCL)
 int libsoccr_set_queue_bytes(struct libsoccr_sk *sk, int queue_id, char *bytes, unsigned flags)

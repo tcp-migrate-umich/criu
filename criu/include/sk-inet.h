@@ -47,6 +47,11 @@ struct inet_sk_desc {
 	struct list_head rlist;
 
 	void *priv;
+
+#ifdef TCP_MIGRATE_TOKEN
+	unsigned int		migrate_token;
+	unsigned int		migrate_enabled;
+#endif
 };
 
 struct inet_port;
