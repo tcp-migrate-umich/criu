@@ -48,7 +48,7 @@ struct inet_sk_desc {
 
 	void *priv;
 
-#ifdef TCP_MIGRATE_TOKEN
+#ifdef TCP_MIGRATE_FEATURE
 	unsigned int		migrate_token;
 	unsigned int		migrate_enabled;
 #endif

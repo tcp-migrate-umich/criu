@@ -6,6 +6,8 @@
 #include <sys/socket.h>		/* sockaddr */
 
 #include "common/config.h"
+#define TCP_MIGRATE_ENABLED	40 	/* to selectively enable tcp migrate */
+#define TCP_MIGRATE_TOKEN	41 	/* Get/set TCP migration token */
 
 /* All packets with this mark have not to be blocked. */
 #define SOCCR_MARK 0xC114
@@ -89,7 +91,7 @@ struct libsoccr_sk_data {
 	uint32_t	max_window;
 	uint32_t	rcv_wnd;
 	uint32_t	rcv_wup;
-#ifdef TCP_MIGRATE_TOKEN
+#ifdef TCP_MIGRATE_FEATURE
 	uint32_t	migrate_enabled;
 	uint32_t	migrate_token;
 #endif

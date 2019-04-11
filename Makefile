@@ -90,7 +90,7 @@ DEFINES			+= -D_FILE_OFFSET_BITS=64
 DEFINES			+= -D_GNU_SOURCE
 
 WARNINGS		:= -Wall -Wformat-security
-
+CFLAGS			+= -DTCP_MIGRATE_FEATURE
 CFLAGS-GCOV		:= --coverage -fno-exceptions -fno-inline -fprofile-update=atomic
 export CFLAGS-GCOV
 

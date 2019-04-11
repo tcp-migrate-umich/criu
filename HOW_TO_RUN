@@ -1,0 +1,16 @@
+Start the server like
+	sudo setsid ./server <PORT_NUMBER> < /dev/null &> server.log &
+If it immediately fails to start up, do sudo ./server to give temporary sudo access. The < /dev/null &> server.log & is required.
+
+Then, start the client
+	sudo ./client 1000 localhost <PORT_NUMBER> 5 hello_world
+
+Then, go to a dump folder of yours and run
+
+	sudo ../criu/criu/criu dump -t <PROCESS_ID> -v4 --tcp-established -o dump.log
+
+The ../criu/criu/criu is just wherever the executatble is. Find out the process ID to use with
+	ps -C server
+
+To view the dump file for the sockets, use
+	crit decode -i files.img --pretty

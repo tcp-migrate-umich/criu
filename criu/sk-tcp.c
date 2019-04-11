@@ -124,9 +124,8 @@ static int dump_tcp_conn_state(struct inet_sk_desc *sk)
 				ret, (int)sizeof(data));
 		goto err_r;
 	}
-
 	sk->state = data.state;
-
+    printf("Connection state: %i\n", data.state);
 	tse.inq_len = data.inq_len;
 	tse.inq_seq = data.inq_seq;
 	tse.outq_len = data.outq_len;
@@ -135,6 +134,11 @@ static int dump_tcp_conn_state(struct inet_sk_desc *sk)
 	tse.has_unsq_len = true;
 	tse.mss_clamp = data.mss_clamp;
 	tse.opt_mask = data.opt_mask;
+#ifdef TCP_MIGRATE_FEATURE
+	tse.migrate_token = data.migrate_token;
+	tse.migrate_enabled = data.migrate_enabled;
+	pr_err("Should get to here, token is %i\n", data.migrate_token);
+#endif
 
 	if (tse.opt_mask & TCPI_OPT_WSCALE) {
 		tse.snd_wscale = data.snd_wscale;

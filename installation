@@ -1,0 +1,12 @@
+#!/bin/sh
+
+# Kernel
+sudo apt install -y vim libncurses5-dev build-essential make git exuberant-ctags libssl-dev bison flex libelf-dev bc
+
+# CRIU
+sudo apt install -y build-essential libprotobuf-dev libprotobuf-c0-dev protobuf-c-compiler protobuf-compiler python-protobuf
+sudo apt install -y --no-install-recommends pkg-config python-ipaddress libbsd-dev iproute2 libcap-dev libnl-3-dev libnet-dev libaio-dev python3-future asciidoc xmlto
+
+# Migrator
+sudo apt install -y python3-pip
+sudo pip3 install argparse paramiko

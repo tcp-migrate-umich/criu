@@ -7,6 +7,11 @@
 #include <string.h>
 #include <sys/ioctl.h>
 #include "soccr.h"
+#include <stdio.h>
+
+#define SOL_TCP 6
+#define TCP_MIGRATE_ENABLED	40 	/* to selectively enable tcp migrate */
+#define TCP_MIGRATE_TOKEN	41 	/* Get/set TCP migration token */
 
 #ifndef SIOCOUTQNSD
 /* MAO - Define SIOCOUTQNSD ioctl if we don't have it */
@@ -272,22 +277,27 @@ err_sopt:
 	return -1;
 }
 
-#ifdef TCP_MIGRATE_TOKEN
+#ifdef TCP_MIGRATE_FEATURE
 static int get_migration_data(struct libsoccr_sk *sk, struct libsoccr_sk_data *data)
 {
-	uint32_t migrate_token = 0;
-	uint32_t migrate_enabled = 0;
-
+	uint32_t migrate_token = 8;
+	uint32_t migrate_enabled = 5;
+	socklen_t enabled_len = sizeof(migrate_enabled);
+	socklen_t token_len = sizeof(migrate_token);
 	if (getsockopt(sk->fd, SOL_TCP,
-			TCP_MIGRATE_TOKEN, &migrate_token, sizeof(migrate_token) ||
-		getsockopt(sk->fd, SOL_TCP,
-			TCP_MIGRATE_ENABLED, &migrate_enabled, sizeof(migrate_enabled)) {
-		/* Appeared since 4.8, but TCP_repair itself is since 3.11 */
-
-		logerr("Unable to get migration properties");
+			TCP_MIGRATE_TOKEN, &migrate_token, &token_len)) {
+		perror("Unable to get migration properties");
 		return -1;
 	}
-
+	if (getsockopt(sk->fd, SOL_TCP,
+			TCP_MIGRATE_ENABLED, &migrate_enabled, &enabled_len)) {
+		/* Appeared since 4.8, but TCP_repair itself is since 3.11 */
+		perror("Unable to get migration properties");
+		return -1;
+	}
+	perror("Shouldn't be an error");
+	printf("token after getsockopt: %i\n", migrate_token);
+	printf("enabled after getsockopt: %i\n\n", migrate_enabled);
 	data->migrate_token			= migrate_token;
 	data->migrate_enabled		= migrate_enabled;
 
@@ -426,7 +436,8 @@ int libsoccr_save(struct libsoccr_sk *sk, struct libsoccr_sk_data *data, unsigne
 	if (get_queue(sk->fd, TCP_SEND_QUEUE, &data->outq_seq, data->outq_len, &sk->send_queue))
 		return -6;
 
-#ifdef TCP_MIGRATE_TOKEN
+#ifdef TCP_MIGRATE_FEATURE
+	printf("Should have gotten to get_migration_data\n");
 	if (get_migration_data(sk, data))
 		return -7;
 #endif
@@ -757,6 +768,8 @@ static int restore_fin_in_snd_queue(int sk, int acked)
 static int libsoccr_restore_queue(struct libsoccr_sk *sk, struct libsoccr_sk_data *data, unsigned data_size,
 		int queue, char *buf);
 
+static int libsoccr_restore_migration_data(struct libsoccr_sk *sk, struct libsoccr_sk_data *data);
+
 int libsoccr_restore(struct libsoccr_sk *sk,
 		struct libsoccr_sk_data *data, unsigned data_size)
 {
@@ -771,7 +784,7 @@ int libsoccr_restore(struct libsoccr_sk *sk,
 	if (libsoccr_restore_queue(sk, data, sizeof(*data), TCP_SEND_QUEUE, sk->send_queue))
 		return -1;
 
-#ifdef TCP_MIGRATE_TOKEN
+#ifdef TCP_MIGRATE_FEATURE
 	if (libsoccr_restore_migration_data(sk, data))
 		return -1;
 #endif
@@ -933,14 +946,18 @@ static int libsoccr_restore_queue(struct libsoccr_sk *sk, struct libsoccr_sk_dat
 	return -5;
 }
 
-#ifdef TCP_MIGRATE_TOKEN
+#ifdef TCP_MIGRATE_FEATURE
 static int libsoccr_restore_migration_data(struct libsoccr_sk *sk, struct libsoccr_sk_data *data)
 {
-	if (setsockopt(sk->fd, SOL_TCP, TCP_MIGRATE_TOKEN, 
-			&data->migrate_token, sizeof(data->migrate_token) ||
+	socklen_t enabled_len = sizeof(data->migrate_enabled);
+	socklen_t token_len = sizeof(data->migrate_token);
+	
+	if (setsockopt(sk->fd, SOL_TCP, TCP_MIGRATE_FEATURE, 
+			&data->migrate_token, token_len) ||
 		setsockopt(sk->fd, SOL_TCP, TCP_MIGRATE_ENABLED, 
-			&data->migrate_enabled, sizeof(data->migrate_enabled))
+			&data->migrate_enabled, enabled_len))
 		return -1;
+	return 0;
 }
 #endif
 
