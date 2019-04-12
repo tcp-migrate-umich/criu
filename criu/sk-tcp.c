@@ -142,7 +142,9 @@ static int dump_tcp_conn_state(struct inet_sk_desc *sk)
 		tse.migrate_token = data.migrate_token;
 		
 	}
+
 	pr_info("Should get to here, token is %i\n", data.migrate_token);
+	pr_info("Should get to here, enabled is %i\n", data.migrate_enabled);
 #endif
 
 	if (tse.opt_mask & TCPI_OPT_WSCALE) {
@@ -338,6 +340,18 @@ static int restore_tcp_conn_state(int sk, struct libsoccr_sk *socr, struct inet_
 		data.rcv_wup = tse->rcv_wup;
 	}
 
+#ifdef TCP_MIGRATE_FEATURE
+	pr_info("Importing migration data\n");
+	pr_info("has_token is %i\n", tse->has_migrate_token);
+	pr_info("has_enabled is %i\n", tse->has_migrate_enabled);
+	pr_info("token is %i\n", tse->migrate_token);
+	pr_info("enabled is %i\n", tse->migrate_enabled);
+	if (tse->has_migrate_enabled) {
+		data.migrate_enabled = tse->migrate_enabled;
+		data.migrate_token = tse->migrate_token;
+	}
+#endif
+
 	if (restore_sockaddr(&sa_src,
 				ii->ie->family, ii->ie->src_port,
 				ii->ie->src_addr, 0) < 0)
@@ -368,6 +382,7 @@ static int restore_tcp_conn_state(int sk, struct libsoccr_sk *socr, struct inet_
 		if (restore_opt(sk, SOL_TCP, TCP_NODELAY, &aux))
 			goto err_c;
 	}
+
 
 	if (tse->has_cork && tse->cork) {
 		aux = 1;

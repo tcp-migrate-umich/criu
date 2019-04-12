@@ -951,11 +951,13 @@ static int libsoccr_restore_migration_data(struct libsoccr_sk *sk, struct libsoc
 {
 	socklen_t enabled_len = sizeof(data->migrate_enabled);
 	socklen_t token_len = sizeof(data->migrate_token);
+
+	logd("in restore, token is %i\n", data->migrate_token);
+	logd("in restore, enabled is %i\n", data->migrate_enabled);
 	
-	if (setsockopt(sk->fd, SOL_TCP, TCP_MIGRATE_FEATURE, 
-			&data->migrate_token, token_len) ||
-		setsockopt(sk->fd, SOL_TCP, TCP_MIGRATE_ENABLED, 
-			&data->migrate_enabled, enabled_len))
+	if (setsockopt(sk->fd, SOL_TCP, TCP_MIGRATE_ENABLED, &data->migrate_enabled, enabled_len))
+		return -1;
+	if (setsockopt(sk->fd, SOL_TCP, TCP_MIGRATE_TOKEN, &data->migrate_token, token_len))
 		return -1;
 	return 0;
 }
