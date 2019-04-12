@@ -835,6 +835,11 @@ int libsoccr_restore(struct libsoccr_sk *sk,
 			return -1;
 	}
 
+#ifdef TCP_MIGRATION_FEATURE
+	// TODO figure out this system call
+	system("cat /proc/net/tcp_mig_syn");
+#endif
+
 	return 0;
 }
 
