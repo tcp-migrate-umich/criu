@@ -63,7 +63,7 @@ def main():
     ssh.exec_command("cd /tmp/criu")
     ssh.exec_command("tar xvf criu_transfer.tar.gz")
     stdin, stdout, stderr = ssh.exec_command("sudo -S -p '' criu restore " \
-        "--tcp-established -D /tmp/criu/criu_transfer -d -v4 -o restore.log", get_pty=True)
+        "--tcp-established --restore-detached -D /tmp/criu/criu_transfer -d -v4 -o restore.log", get_pty=True)
     stdin.write(args.password + "\n")
     stdin.flush()
     print(stdout.readlines())
