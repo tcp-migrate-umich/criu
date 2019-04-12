@@ -135,9 +135,14 @@ static int dump_tcp_conn_state(struct inet_sk_desc *sk)
 	tse.mss_clamp = data.mss_clamp;
 	tse.opt_mask = data.opt_mask;
 #ifdef TCP_MIGRATE_FEATURE
-	tse.migrate_token = data.migrate_token;
+	tse.has_migrate_enabled = true;
 	tse.migrate_enabled = data.migrate_enabled;
-	pr_err("Should get to here, token is %i\n", data.migrate_token);
+	if (data.migrate_enabled) {
+		tse.has_migrate_token = true;
+		tse.migrate_token = data.migrate_token;
+		
+	}
+	pr_info("Should get to here, token is %i\n", data.migrate_token);
 #endif
 
 	if (tse.opt_mask & TCPI_OPT_WSCALE) {
