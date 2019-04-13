@@ -778,16 +778,18 @@ int libsoccr_restore(struct libsoccr_sk *sk,
 	if (libsoccr_set_sk_data_noq(sk, data, data_size))
 		return -1;
 
+#ifdef TCP_MIGRATE_FEATURE
+	if (libsoccr_restore_migration_data(sk, data))
+		return -1;
+	// TODO figure out this system call
+	system("cat /proc/net/tcp_mig_syn");
+#endif
+
 	if (libsoccr_restore_queue(sk, data, sizeof(*data), TCP_RECV_QUEUE, sk->recv_queue))
 		return -1;
 
 	if (libsoccr_restore_queue(sk, data, sizeof(*data), TCP_SEND_QUEUE, sk->send_queue))
 		return -1;
-
-#ifdef TCP_MIGRATE_FEATURE
-	if (libsoccr_restore_migration_data(sk, data))
-		return -1;
-#endif
 
 	if (data->flags & SOCCR_FLAGS_WINDOW) {
 		struct tcp_repair_window wopt = {
@@ -834,11 +836,6 @@ int libsoccr_restore(struct libsoccr_sk *sk,
 		if (send_fin(sk, data, data_size, TH_ACK) < 0)
 			return -1;
 	}
-
-#ifdef TCP_MIGRATION_FEATURE
-	// TODO figure out this system call
-	system("cat /proc/net/tcp_mig_syn");
-#endif
 
 	return 0;
 }
