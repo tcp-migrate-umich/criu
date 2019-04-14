@@ -781,8 +781,6 @@ int libsoccr_restore(struct libsoccr_sk *sk,
 #ifdef TCP_MIGRATE_FEATURE
 	if (libsoccr_restore_migration_data(sk, data))
 		return -1;
-	// TODO figure out this system call
-	system("cat /proc/net/tcp_mig_syn");
 #endif
 
 	if (libsoccr_restore_queue(sk, data, sizeof(*data), TCP_RECV_QUEUE, sk->recv_queue))
@@ -956,11 +954,16 @@ static int libsoccr_restore_migration_data(struct libsoccr_sk *sk, struct libsoc
 
 	logd("in restore, token is %i\n", data->migrate_token);
 	logd("in restore, enabled is %i\n", data->migrate_enabled);
-	
+
+	// Set enable then the token
 	if (setsockopt(sk->fd, SOL_TCP, TCP_MIGRATE_ENABLED, &data->migrate_enabled, enabled_len))
 		return -1;
-	if (setsockopt(sk->fd, SOL_TCP, TCP_MIGRATE_TOKEN, &data->migrate_token, token_len))
-		return -1;
+
+	if (data->migrate_enabled) {
+		// This will cause the migrate request to be sent
+		if (setsockopt(sk->fd, SOL_TCP, TCP_MIGRATE_TOKEN, &data->migrate_token, token_len))
+			return -1;
+	}
 	return 0;
 }
 #endif
